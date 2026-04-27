@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: int_rtt__incomplete_pathways
+    description: >
+      Intermediate model containing only NHS RTT Part_2 incomplete pathways,
+      excluding C_999 aggregate treatment-function rows. The grain is one row per
+      period month, provider, commissioner and treatment function.
+    columns:
+      - name: period_month
+        tests:
+          - not_null
+
+      - name: provider_org_code
+        tests:
+          - not_null
+
+      - name: commissioner_org_code
+        tests:
+          - not_null
+
+      - name: treatment_function_code
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_count
+        description: Published count of incomplete RTT pathways for the row grain.
+        tests:
+          - not_null

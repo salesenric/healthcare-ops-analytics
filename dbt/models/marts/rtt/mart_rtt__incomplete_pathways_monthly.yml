@@ -1,0 +1,89 @@
+version: 2
+
+models:
+  - name: mart_rtt__incomplete_pathways_monthly
+    description: >
+      Monthly NHS RTT incomplete pathways mart. The grain is one row per reporting
+      month, provider, commissioner and treatment function. It excludes C_999
+      aggregate treatment-function rows and exposes backlog KPIs based on waiting-time
+      bands.
+
+    columns:
+      - name: period_month
+        description: First day of the reporting month.
+        tests:
+          - not_null
+
+      - name: period_end_date
+        description: Last day of the reporting month.
+        tests:
+          - not_null
+
+      - name: provider_org_code
+        description: Provider organisation code.
+        tests:
+          - not_null
+
+      - name: provider_org_name
+        description: Provider organisation name.
+
+      - name: commissioner_org_code
+        description: Commissioner organisation code.
+        tests:
+          - not_null
+
+      - name: commissioner_org_name
+        description: Commissioner organisation name.
+
+      - name: treatment_function_code
+        description: Treatment function code. C_999 aggregate rows are excluded from this mart.
+        tests:
+          - not_null
+
+      - name: treatment_function_name
+        description: Treatment function name.
+
+      - name: incomplete_pathways_count
+        description: Total incomplete RTT pathways for the row grain.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_within_18_weeks
+        description: Incomplete RTT pathways waiting up to 18 weeks.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_over_18_weeks
+        description: Incomplete RTT pathways waiting over 18 weeks.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_over_52_weeks
+        description: Incomplete RTT pathways waiting over 52 weeks.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_over_78_weeks
+        description: Incomplete RTT pathways waiting over 78 weeks.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_over_104_weeks
+        description: Incomplete RTT pathways waiting over 104 weeks.
+        tests:
+          - not_null
+
+      - name: pct_within_18_weeks
+        description: Percentage of incomplete RTT pathways within 18 weeks, expressed from 0 to 100.
+
+      - name: pct_over_18_weeks
+        description: Percentage of incomplete RTT pathways over 18 weeks, expressed from 0 to 100.
+
+      - name: pct_over_52_weeks
+        description: Percentage of incomplete RTT pathways over 52 weeks, expressed from 0 to 100.
+
+      - name: pct_over_78_weeks
+        description: Percentage of incomplete RTT pathways over 78 weeks, expressed from 0 to 100.
+
+      - name: pct_over_104_weeks
+        description: Percentage of incomplete RTT pathways over 104 weeks, expressed from 0 to 100.

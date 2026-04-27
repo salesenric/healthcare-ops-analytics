@@ -1,0 +1,31 @@
+version: 2
+
+sources:
+  - name: nhs_ops_raw
+    database: healthcare-ops-analytics-dev
+    schema: nhs_ops_raw
+    description: Raw NHS RTT waiting times data loaded from monthly CSV extracts.
+    tables:
+      - name: rtt_waiting_times_base
+        description: >
+          Base raw table containing NHS RTT waiting times data across multiple RTT parts,
+          organisations, treatment functions and waiting-time week bands.
+        columns:
+          - name: period
+            description: Source period label from the NHS file.
+          - name: source_period_month
+            description: Period month derived during ingestion, stored as epoch nanoseconds.
+          - name: source_period_end
+            description: Period end date derived during ingestion, stored as epoch nanoseconds.
+          - name: rtt_part_type
+            description: RTT data family, for example Part_2 for incomplete pathways.
+          - name: rtt_part_description
+            description: Human-readable RTT part description.
+          - name: provider_org_code
+            description: Provider organisation code.
+          - name: commissioner_org_code
+            description: Commissioner organisation code.
+          - name: treatment_function_code
+            description: Treatment function code. C_999 represents aggregate total rows.
+          - name: total_all
+            description: Published total count across all waiting-time bands.

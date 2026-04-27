@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: stg_nhs_ops__rtt_waiting_times_base
+    description: >
+      Staging model for NHS RTT waiting times data. It standardises period fields,
+      renames waiting-time band columns, casts count measures to integers and keeps
+      raw RTT classifications for downstream semantic models.
+    columns:
+      - name: period_month
+        description: First day of the reporting month.
+        tests:
+          - not_null
+
+      - name: period_end_date
+        description: Last day of the reporting month.
+        tests:
+          - not_null
+
+      - name: rtt_part_type
+        description: RTT part type, such as Part_2 for incomplete pathways.
+        tests:
+          - not_null
+
+      - name: provider_org_code
+        description: Provider organisation code.
+
+      - name: commissioner_org_code
+        description: Commissioner organisation code.
+
+      - name: treatment_function_code
+        description: Treatment function code. C_999 represents aggregate total rows.
+        tests:
+          - not_null
+
+      - name: total_pathways
+        description: Published total count across all waiting-time bands.
+        tests:
+          - not_null
