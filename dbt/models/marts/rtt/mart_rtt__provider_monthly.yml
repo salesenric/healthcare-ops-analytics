@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: mart_rtt__provider_monthly
+    description: >
+      Monthly NHS RTT incomplete pathways mart aggregated at provider level.
+      The grain is one row per reporting month and provider. This model is designed
+      for provider-level reporting, dashboarding and long-wait pressure analysis.
+
+    columns:
+      - name: period_month
+        description: First day of the reporting month.
+        tests:
+          - not_null
+
+      - name: period_end_date
+        description: Last day of the reporting month.
+        tests:
+          - not_null
+
+      - name: provider_org_code
+        description: Provider organisation code.
+        tests:
+          - not_null
+
+      - name: provider_org_name
+        description: Provider organisation name.
+
+      - name: provider_parent_org_code
+        description: Parent provider organisation code.
+
+      - name: provider_parent_name
+        description: Parent provider organisation name.
+
+      - name: commissioner_count
+        description: Number of distinct commissioners associated with the provider in the reporting month.
+
+      - name: treatment_function_count
+        description: Number of distinct treatment functions reported by the provider in the reporting month.
+
+      - name: incomplete_pathways_count
+        description: Total incomplete RTT pathways for the provider and reporting month.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_within_18_weeks
+        description: Incomplete RTT pathways waiting within 18 weeks.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_over_18_weeks
+        description: Incomplete RTT pathways waiting over 18 weeks.
+        tests:
+          - not_null
+
+      - name: incomplete_pathways_over_52_weeks
+        description: Incomplete RTT pathways waiting over 52 weeks.
+        tests:
+          - not_null
+
+      - name: pct_within_18_weeks
+        description: Percentage of incomplete RTT pathways within 18 weeks, expressed from 0 to 100.
+
+      - name: pct_over_18_weeks
+        description: Percentage of incomplete RTT pathways over 18 weeks, expressed from 0 to 100.
+
+      - name: pct_over_52_weeks
+        description: Percentage of incomplete RTT pathways over 52 weeks, expressed from 0 to 100.
