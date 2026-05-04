@@ -180,7 +180,7 @@ limit 20;
 --   One row per provider and reporting month, excluding the first month because
 --   it has no previous month for comparison.
 -- Main metrics:
---   mom_backlog_change and mom_over_18_change.
+--   mom_backlog_abs_change and mom_over_18_abs_change.
 -- Interpretation notes:
 --   This query is useful for anomaly detection and follow-up investigation.
 --   Large changes may reflect operational changes, reporting changes, case-mix
@@ -481,3 +481,204 @@ select *
 from final
 where period_month = date '2025-01-01'
 order by abs(mom_total_abs_change) desc;
+
+
+
+-- ---------------------------------------------------------------------
+-- SQL practice exercises
+-- ---------------------------------------------------------------------
+
+-- Exercise 1: Providers with worst relative long-wait pressure
+-- Purpose:
+--   Identify the providers with the highest pct_over_18_weeks in the latest reporting month
+--   among providers with at least 10,000 incomplete pathways.
+-- Grain:
+--   One row per provider in the latest available reporting month.
+-- Main metrics:
+--   incomplete_pathways_count, over_18_weeks, over_52_weeks,
+--   pct_over_18_weeks, pct_over_52_weeks.
+-- Interpretation notes:
+--   This query ranks providers by pct_over_18_weeks, not by absolute backlog volume.
+--   Compare absolute volume and percentages together.
+with latest_period as (
+
+  select max(period_month) as period_month
+  from `healthcare-ops-analytics-dev.nhs_ops_analytics.mart_rtt__incomplete_pathways_monthly`
+
+),
+
+provider_summary as (
+
+  select
+    m.period_month,
+    m.provider_org_code,
+    m.provider_org_name,
+
+    sum(m.incomplete_pathways_count) as incomplete_pathways_count,
+    sum(m.incomplete_pathways_over_18_weeks) as over_18_weeks,
+    sum(m.incomplete_pathways_over_52_weeks) as over_52_weeks,
+
+    round(
+      100 * safe_divide(
+        sum(m.incomplete_pathways_over_18_weeks),
+        sum(m.incomplete_pathways_count)
+      ),
+      2
+    ) as pct_over_18_weeks,
+
+    round(
+      100 * safe_divide(
+        sum(m.incomplete_pathways_over_52_weeks),
+        sum(m.incomplete_pathways_count)
+      ),
+      2
+    ) as pct_over_52_weeks
+
+  from `healthcare-ops-analytics-dev.nhs_ops_analytics.mart_rtt__incomplete_pathways_monthly` m
+  join latest_period lp
+    on m.period_month = lp.period_month
+  group by 1, 2, 3
+  having sum(m.incomplete_pathways_count) >= 10000
+
+)
+
+select *
+from provider_summary
+order by pct_over_18_weeks desc
+limit 20;
+
+
+
+-- Exercise 2: Treatment function trend over time
+-- Purpose:
+--   Track month-by-month trends for selected high-volume treatment functions.
+-- Grain:
+--   One row per treatment function and reporting month, excluding the first month
+--   because lag-based month-over-month metrics require a previous month.
+-- Main metrics:
+--   incomplete_pathways_count, previous_month_incomplete_pathways_count, mom_backlog_abs_change, over_18_weeks,
+--   previous_month_over_18_weeks, mom_over_18_abs_change, pct_over_18_weeks.
+-- Interpretation notes:
+--   This query lists treatments by name and month.
+--   Compare absolute volume and percentages together.
+with treatment_monthly as (
+
+  select
+    period_month,
+    treatment_function_code,
+    treatment_function_name,
+
+    sum(incomplete_pathways_count) as incomplete_pathways_count,
+    sum(incomplete_pathways_over_18_weeks) as over_18_weeks
+
+  from `healthcare-ops-analytics-dev.nhs_ops_analytics.mart_rtt__incomplete_pathways_monthly`
+  where treatment_function_code in ('C_110', 'C_120', 'C_130', 'C_502', 'C_101')
+  group by 1, 2, 3
+
+),
+
+with_previous as (
+
+  select
+    *,
+    lag(incomplete_pathways_count) over (
+      partition by treatment_function_code
+      order by period_month
+    ) as previous_month_incomplete_pathways_count,
+
+    lag(over_18_weeks) over (
+      partition by treatment_function_code
+      order by period_month
+    ) as previous_month_over_18_weeks
+
+  from treatment_monthly
+
+),
+
+final as (
+
+  select
+    period_month,
+    treatment_function_code,
+    treatment_function_name,
+
+    incomplete_pathways_count,
+    previous_month_incomplete_pathways_count,
+    incomplete_pathways_count - previous_month_incomplete_pathways_count as mom_backlog_abs_change,
+
+    over_18_weeks,
+    previous_month_over_18_weeks,
+    over_18_weeks - previous_month_over_18_weeks as mom_over_18_abs_change,
+
+    round(100 * safe_divide(over_18_weeks, incomplete_pathways_count), 2) as pct_over_18_weeks
+
+  from with_previous
+  where previous_month_incomplete_pathways_count is not null
+
+)
+
+select *
+from final
+order by 3, 1
+limit 50;
+
+
+
+-- Exercise 3: Provider improvement Oct to Mar
+-- Purpose:
+--   Identify which providers improved/worsened the most between Oct 2024 and Mar 2025.
+-- Grain:
+--   One row per provider, comparing October 2024 against March 2025.
+-- Main metrics:
+--   oct_backlog, mar_backlog, backlog_abs_change, oct_over_18, mar_over_18, over_18_abs_change,
+--   oct_pct_over_18, mar_pct_over_18, pct_over_18_point_change.
+-- Interpretation notes:
+--   This query lists providers by abs(pct_over_18_point_change) desc.
+--   Ordering by absolute point change mixes improvements and deteriorations;
+--   use ascending or descending ordering to inspect each direction separately.
+--   Compare absolute volume and percentages together.
+with provider_oct_mar as (
+
+  select
+    provider_org_code,
+    provider_org_name,
+
+    sum(case when period_month = date '2024-10-01' then incomplete_pathways_count else 0 end) as oct_backlog,
+    sum(case when period_month = date '2025-03-01' then incomplete_pathways_count else 0 end) as mar_backlog,
+
+    sum(case when period_month = date '2024-10-01' then incomplete_pathways_over_18_weeks else 0 end) as oct_over_18,
+    sum(case when period_month = date '2025-03-01' then incomplete_pathways_over_18_weeks else 0 end) as mar_over_18
+
+  from `healthcare-ops-analytics-dev.nhs_ops_analytics.mart_rtt__incomplete_pathways_monthly`
+  where period_month in (date '2024-10-01', date '2025-03-01')
+  group by 1, 2
+  having sum(case when period_month = date '2025-03-01' then incomplete_pathways_count else 0 end) >= 10000
+
+),
+
+final as (
+
+  select
+    provider_org_code,
+    provider_org_name,
+
+    oct_backlog,
+    mar_backlog,
+    mar_backlog-oct_backlog as backlog_abs_change,
+
+    oct_over_18,
+    mar_over_18,
+    mar_over_18-oct_over_18 as over_18_abs_change,
+
+    round(100 * safe_divide(oct_over_18, oct_backlog), 2) as oct_pct_over_18,
+    round(100 * safe_divide(mar_over_18, mar_backlog), 2) as mar_pct_over_18,
+    round((100 * safe_divide(mar_over_18, mar_backlog))-(100 * safe_divide(oct_over_18, oct_backlog)), 2) as pct_over_18_point_change
+
+  from provider_oct_mar
+
+)
+
+select *
+from final
+order by abs(pct_over_18_point_change) desc
+limit 50;
