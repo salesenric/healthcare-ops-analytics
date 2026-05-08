@@ -1,0 +1,61 @@
+name: dbt CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  dbt-ci:
+    name: Run dbt compile and tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: dbt
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ../requirements-dbt.txt
+
+      - name: Create dbt profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<'EOF'
+          healthcare_ops_analytics:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: service-account-json
+                project: healthcare-ops-analytics-dev
+                dataset: nhs_ops_analytics
+                threads: 4
+                timeout_seconds: 300
+                location: EU
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          EOF
+
+      - name: dbt debug
+        run: dbt debug
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: dbt compile
+        run: dbt compile
+
+      - name: dbt test
+        run: dbt test
