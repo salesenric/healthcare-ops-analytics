@@ -242,6 +242,110 @@ On every push to `main` and on pull requests, the workflow:
 
 This validates that the dbt project compiles and that data quality tests pass in a clean CI environment.
 
+## Docker
+
+The project includes Docker support for reproducible local execution.
+
+Main files:
+
+```text
+Dockerfile
+docker-compose.yml
+.dockerignore
+```
+
+The Docker setup provides a containerised Python/dbt environment that can run project commands without relying directly on the local virtual environments.
+
+Example commands:
+
+```powershell
+docker compose run --rm analytics python --version
+docker compose run --rm analytics dbt --version
+docker compose run --rm analytics bash -c "cd dbt && dbt compile"
+docker compose run --rm analytics bash -c "cd dbt && dbt test"
+```
+
+The local Docker setup mounts:
+
+- the project directory into the container
+- the local dbt profile directory
+- the local Google Cloud credentials directory
+
+This allows dbt to run inside a container while still connecting to BigQuery through the local development credentials.
+
+## Orchestration
+
+The project includes a local Airflow setup using Docker Compose.
+
+Airflow is used to orchestrate the end-to-end ELT workflow from local raw files to validated dbt marts.
+
+Main files:
+
+```text
+airflow/Dockerfile
+airflow/docker-compose.yml
+airflow/dags/rtt_dbt_ci_dag.py
+airflow/dags/rtt_elt_pipeline_dag.py
+```
+
+### Airflow DAGs
+
+#### `rtt_dbt_ci`
+
+This DAG validates the dbt project from Airflow.
+
+Workflow:
+
+```text
+dbt_debug
+    ↓
+dbt_deps
+    ↓
+dbt_compile
+    ↓
+dbt_test
+```
+
+It is useful for checking that Airflow can execute dbt commands and connect to BigQuery.
+
+#### `rtt_elt_pipeline`
+
+This DAG orchestrates the local ELT workflow.
+
+Workflow:
+
+```text
+check_raw_files
+    ↓
+build_rtt_base
+    ↓
+validate_rtt_base
+    ↓
+load_rtt_base_to_bigquery
+    ↓
+dbt_run
+    ↓
+dbt_test
+```
+
+This represents the full local data pipeline:
+
+```text
+raw NHS RTT ZIP files
+    ↓
+Python processing
+    ↓
+local parquet output
+    ↓
+BigQuery raw table
+    ↓
+dbt transformations
+    ↓
+tested analytical marts
+```
+
+The Airflow setup is intended for local development and portfolio demonstration, not production deployment.
+
 ## Analysis
 
 Analysis SQL is stored in:
