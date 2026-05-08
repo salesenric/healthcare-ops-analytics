@@ -1,0 +1,15 @@
+services:
+  analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: healthcare-ops-analytics
+    working_dir: /app
+    environment:
+      GOOGLE_CLOUD_PROJECT: healthcare-ops-analytics-dev
+      CLOUDSDK_CORE_PROJECT: healthcare-ops-analytics-dev
+    volumes:
+      - .:/app
+      - ${USERPROFILE}/.dbt:/root/.dbt:ro
+      - ${APPDATA}/gcloud:/root/.config/gcloud:ro
+    command: bash
