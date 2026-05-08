@@ -226,6 +226,22 @@ The project validates that:
 within_18_weeks + over_18_weeks = incomplete_pathways_count
 ```
 
+## CI/CD
+
+The repository includes a GitHub Actions workflow for dbt CI.
+
+On every push to `main` and on pull requests, the workflow:
+
+- installs Python and dbt dependencies
+- creates a dbt `profiles.yml` for CI
+- authenticates to BigQuery using a GitHub repository secret
+- runs `dbt debug`
+- runs `dbt deps`
+- runs `dbt compile`
+- runs `dbt test`
+
+This validates that the dbt project compiles and that data quality tests pass in a clean CI environment.
+
 ## Analysis
 
 Analysis SQL is stored in:
