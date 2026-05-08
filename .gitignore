@@ -35,3 +35,6 @@ dbt/**/dbt_packages/
 
 # Tableau
 viz/tableau/*.twbr
+
+# Airflow
+airflow/logs/

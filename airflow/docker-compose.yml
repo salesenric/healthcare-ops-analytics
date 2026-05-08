@@ -1,0 +1,105 @@
+services:
+  airflow-db:
+    image: postgres:16
+    container_name: healthcare_airflow_db
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  airflow-init:
+    build:
+      context: ..
+      dockerfile: airflow/Dockerfile
+    image: healthcare-airflow:latest
+    container_name: healthcare_airflow_init
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: airflow
+      _AIRFLOW_WWW_USER_PASSWORD: airflow
+      DBT_PROFILES_DIR: /home/airflow/.dbt
+      CLOUDSDK_CONFIG: /home/airflow/.config/gcloud
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ..:/opt/airflow/project
+      - ${USERPROFILE}/.dbt:/home/airflow/.dbt:ro
+      - ${APPDATA}/gcloud:/home/airflow/.config/gcloud:ro
+    command: version
+
+  airflow-webserver:
+    build:
+      context: ..
+      dockerfile: airflow/Dockerfile
+    image: healthcare-airflow:latest
+    container_name: healthcare_airflow_webserver
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      GOOGLE_CLOUD_PROJECT: healthcare-ops-analytics-dev
+      CLOUDSDK_CORE_PROJECT: healthcare-ops-analytics-dev
+      DBT_PROFILES_DIR: /home/airflow/.dbt
+      CLOUDSDK_CONFIG: /home/airflow/.config/gcloud
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ..:/opt/airflow/project
+      - ${USERPROFILE}/.dbt:/home/airflow/.dbt:ro
+      - ${APPDATA}/gcloud:/home/airflow/.config/gcloud:ro
+    command: webserver
+    restart: unless-stopped
+
+  airflow-scheduler:
+    build:
+      context: ..
+      dockerfile: airflow/Dockerfile
+    image: healthcare-airflow:latest
+    container_name: healthcare_airflow_scheduler
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      GOOGLE_CLOUD_PROJECT: healthcare-ops-analytics-dev
+      CLOUDSDK_CORE_PROJECT: healthcare-ops-analytics-dev
+      DBT_PROFILES_DIR: /home/airflow/.dbt
+      CLOUDSDK_CONFIG: /home/airflow/.config/gcloud
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ..:/opt/airflow/project
+      - ${USERPROFILE}/.dbt:/home/airflow/.dbt:ro
+      - ${APPDATA}/gcloud:/home/airflow/.config/gcloud:ro
+    command: scheduler
+    restart: unless-stopped
+
+volumes:
+  airflow-db-volume:
