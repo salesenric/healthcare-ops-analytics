@@ -385,6 +385,16 @@ Dashboard documentation and screenshots are available in:
 docs/dashboard.md
 ```
 
+## Project showcase
+
+A concise interview-oriented project summary is available in:
+
+```text
+docs/project_showcase.md
+```
+
+It summarises the business problem, technical solution, modelling decisions, validation results, selected findings and the skills demonstrated by the project.
+
 ## Analysis
 
 Analysis SQL is stored in:
@@ -514,6 +524,7 @@ Completed:
 - Data Studio dashboard connected to BigQuery marts
 - dashboard screenshots and documentation
 - architecture diagram
+- project showcase summary for interviews and portfolio presentation
 
 Planned improvements:
 
@@ -521,4 +532,3 @@ Planned improvements:
 - add cost/performance notes for BigQuery
 - add incremental loading pattern
 - migrate GitHub Actions authentication from service account key to OIDC / Workload Identity Federation
-- add a short interview-oriented project write-up
