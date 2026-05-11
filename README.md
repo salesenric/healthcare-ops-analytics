@@ -15,6 +15,10 @@ This project was built to practice and demonstrate:
 - Data quality checks with dbt tests
 - Reusable marts for BI and operational reporting
 - SQL analysis of waiting list backlog and long-wait pressure
+- GitHub Actions CI for automated dbt validation
+- Docker and Docker Compose for reproducible local execution
+- Airflow-based local orchestration
+- Data Studio dashboarding on top of BigQuery marts
 
 ## Business context
 
@@ -61,6 +65,12 @@ dbt aggregate marts
 SQL analysis / BI layer
 ```
 
+A Mermaid architecture diagram is available in:
+
+```text
+docs/architecture.md
+```
+
 ## Tech stack
 
 - Python
@@ -71,12 +81,22 @@ SQL analysis / BI layer
 - dbt-bigquery
 - SQL
 - Git / GitHub
-- Tableau Public, Looker Studio or Power BI planned for BI layer
+- GitHub Actions
+- Docker
+- Docker Compose
+- Apache Airflow
+- Data Studio, formerly Looker Studio
 
 ## Repository structure
 
 ```text
 healthcare-ops-analytics/
+├── .github/
+│   └── workflows/
+├── airflow/
+│   ├── dags/
+│   ├── Dockerfile
+│   └── docker-compose.yml
 ├── dbt/
 │   ├── macros/
 │   ├── models/
@@ -85,6 +105,7 @@ healthcare-ops-analytics/
 │   │   └── marts/
 │   └── tests/
 ├── docs/
+│   └── assets/
 ├── scripts/
 ├── sql/
 │   └── analysis/
@@ -92,6 +113,8 @@ healthcare-ops-analytics/
 │   ├── raw/
 │   ├── processed/
 │   └── exports/
+├── Dockerfile
+├── docker-compose.yml
 ├── requirements.txt
 ├── requirements-dbt.txt
 └── README.md
@@ -346,6 +369,22 @@ tested analytical marts
 
 The Airflow setup is intended for local development and portfolio demonstration, not production deployment.
 
+## Dashboard
+
+A Data Studio dashboard is available for the final BigQuery marts.
+
+The dashboard includes:
+
+- national backlog overview
+- provider-level analysis
+- treatment-function-level analysis
+
+Dashboard documentation and screenshots are available in:
+
+```text
+docs/dashboard.md
+```
+
 ## Analysis
 
 Analysis SQL is stored in:
@@ -419,7 +458,7 @@ python -m venv .venv-dbt
 pip install -r requirements-dbt.txt
 ```
 
-### 6. Run dbt
+### 6. Run dbt locally
 
 ```powershell
 cd dbt
@@ -427,6 +466,35 @@ dbt debug
 dbt run
 dbt test
 ```
+
+### 7. Run dbt through Docker Compose
+
+```powershell
+docker compose run --rm analytics bash -c "cd dbt && dbt debug"
+docker compose run --rm analytics bash -c "cd dbt && dbt run"
+docker compose run --rm analytics bash -c "cd dbt && dbt test"
+```
+
+### 8. Run Airflow locally
+
+```powershell
+cd airflow
+docker compose up -d
+```
+
+Open the Airflow UI:
+
+```text
+http://localhost:8080
+```
+
+The local Airflow setup includes two DAGs:
+
+- `rtt_dbt_ci`
+- `rtt_elt_pipeline`
+
+The `rtt_elt_pipeline` DAG orchestrates the full local workflow from raw files to tested dbt marts.
+
 
 ## Current status
 
@@ -439,12 +507,18 @@ Completed:
 - dbt data quality tests
 - SQL analysis
 - documented findings
+- GitHub Actions dbt CI
+- Docker environment for reproducible dbt execution
+- Docker Compose command wrapper for local execution
+- Airflow local orchestration with Docker Compose
+- Data Studio dashboard connected to BigQuery marts
+- dashboard screenshots and documentation
+- architecture diagram
 
 Planned improvements:
 
-- add GitHub Actions for dbt compile/test
-- add orchestration with Airflow or Prefect
-- add a lightweight BI dashboard
-- add architecture diagram
-- add incremental loading pattern
+- add dashboard share link once the report is finalised
 - add cost/performance notes for BigQuery
+- add incremental loading pattern
+- migrate GitHub Actions authentication from service account key to OIDC / Workload Identity Federation
+- add a short interview-oriented project write-up

@@ -38,3 +38,5 @@ viz/tableau/*.twbr
 
 # Airflow
 airflow/logs/
+airflow/dags/__pycache__/
+airflow/dags/*.pyc

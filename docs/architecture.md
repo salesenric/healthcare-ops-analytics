@@ -19,7 +19,7 @@ flowchart TD
     H --> K
 
     K --> L[Findings documentation]
-    I --> M[Looker Studio dashboard]
+    I --> M[Data Studio dashboard]
     J --> M
 
     N[GitHub Actions CI] --> O[dbt debug / deps / compile / test]
@@ -39,4 +39,4 @@ flowchart TD
 - **GitHub Actions** runs dbt validation automatically on push and pull requests.
 - **Docker** provides reproducible local execution.
 - **Airflow** orchestrates the local ELT workflow from raw files to tested marts.
-- **Looker Studio** is planned as the BI layer on top of BigQuery marts.
+- **Data Studio** is used as the BI layer on top of BigQuery marts.
