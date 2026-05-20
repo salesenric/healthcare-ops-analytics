@@ -1,5 +1,7 @@
 # Healthcare Operations Analytics
 
+![dbt CI](https://github.com/salesenric/healthcare-ops-analytics/actions/workflows/dbt_ci.yml/badge.svg)
+
 End-to-end analytics engineering project modelling NHS Referral to Treatment (RTT) waiting time data using Python, BigQuery and dbt.
 
 The project focuses on building a reliable ELT workflow for healthcare operations analytics: ingesting public monthly NHS RTT data, loading it into BigQuery, modelling it with dbt, validating metric consistency, and producing marts for provider-level and treatment-function-level analysis.
